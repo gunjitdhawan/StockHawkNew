@@ -1,13 +1,26 @@
 <resources>
-  <string name="app_name">Stock Hawk</string>
+    <string name="app_name">Stock Hawk</string>
 
-  <string name="action_example">Example action</string>
+    <string name="action_example">Example action</string>
 
-  <string name="action_settings">Settings</string>
-  <string name="action_change_units">Change Units</string>
-  <string name="symbol_search">Symbol Search</string>
-  <string name="content_test">Search for a Stock Symbol</string>
-  <string name="input_hint">FB</string>
-  <string name="input_prefill"></string>
-  <string name="network_toast">Uh-oh! This app requires an internet connection</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_change_units">Change Units</string>
+    <string name="symbol_search">Symbol Search</string>
+    <string name="content_test">Search for a Stock Symbol</string>
+    <string name="input_hint">FB</string>
+    <string name="input_prefill"></string>
+    <string name="fab_btn_desc">Search Stock Button</string>
+    <string name="network_toast">Uh-oh! This app requires an internet connection</string>
+    <string name="out_of_date_toast">Uh-oh! Looks like your stock details are out of date.</string>
+
+    <string name="yrLow">Year\'s Low</string>
+    <string name="yrHigh">Year\'s High</string>
+    <string name="dayLow">Day\'s Low</string>
+    <string name="dayHigh">Day\'s High</string>
+    <string name="curr">Current Bid</string>
+    <string name="epsCurr" translatable="false">EPS(Current)</string>
+    <string name="epsNxt" translatable="false">EPS(Next)</string>
+    <string name="fdma" translatable="false">50 Day MA</string>
+    <string name="oneYrExpec" translatable="false">Expected 1 Year</string>
+    <string name="thdma" translatable="false">200 Day MA</string>
 </resources>

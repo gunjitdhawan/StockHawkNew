@@ -1,21 +1,29 @@
 package com.sam_chordas.android.stockhawk.service;
 
+import android.app.PendingIntent;
+import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.os.RemoteException;
 import android.util.Log;
+import android.widget.RemoteViews;
+
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.GcmTaskService;
 import com.google.android.gms.gcm.TaskParams;
+import com.sam_chordas.android.stockhawk.R;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
 import com.sam_chordas.android.stockhawk.rest.Utils;
+import com.sam_chordas.android.stockhawk.widget.StockWidgetProvider;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -32,7 +40,7 @@ public class StockTaskService extends GcmTaskService{
   private Context mContext;
   private StringBuilder mStoredSymbols = new StringBuilder();
   private boolean isUpdate;
-
+    private int[] allWidgetIds;
   public StockTaskService(){}
 
   public StockTaskService(Context context){
@@ -47,8 +55,16 @@ public class StockTaskService extends GcmTaskService{
     return response.body().string();
   }
 
+    @Override
+    public void onStart(Intent intent, int startId) {
+        Log.e("onstart", "111");
+
+        super.onStart(intent, startId);
+    }
+
   @Override
   public int onRunTask(TaskParams params){
+      Log.e("onruntask", "111");
     Cursor initQueryCursor;
     if (mContext == null){
       mContext = this;
@@ -62,6 +78,9 @@ public class StockTaskService extends GcmTaskService{
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }
+      if(params!=null && params.getExtras()!=null)
+      allWidgetIds = params.getExtras().getIntArray(AppWidgetManager.EXTRA_APPWIDGET_IDS);
+
     if (params.getTag().equals("init") || params.getTag().equals("periodic")){
       isUpdate = true;
       initQueryCursor = mContext.getContentResolver().query(QuoteProvider.Quotes.CONTENT_URI,
@@ -123,6 +142,7 @@ public class StockTaskService extends GcmTaskService{
           }
           mContext.getContentResolver().applyBatch(QuoteProvider.AUTHORITY,
               Utils.quoteJsonToContentVals(getResponse));
+
         }catch (RemoteException | OperationApplicationException e){
           Log.e(LOG_TAG, "Error applying batch insert", e);
         }
@@ -130,8 +150,44 @@ public class StockTaskService extends GcmTaskService{
         e.printStackTrace();
       }
     }
-
+    populateWidget(Utils.stockName, Utils.stockPrice);
     return result;
   }
 
+    private void populateWidget(String stockName, String stockPrice) {
+
+        Log.e("populate", "called");
+            try {
+                AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(mContext
+                        .getApplicationContext());
+                for (int widgetId : allWidgetIds) {
+                    RemoteViews remoteViews = new RemoteViews(mContext.getApplicationContext().getPackageName(),
+                            R.layout.widget_layout);
+                    remoteViews.setTextViewText(R.id.stock_name,
+                            String.valueOf(stockName));
+
+                    remoteViews.setTextViewText(R.id.stock_price,
+                            String.valueOf(stockPrice));
+
+
+                    Intent clickIntent = new Intent(mContext.getApplicationContext(),
+                            StockWidgetProvider.class);
+
+                    clickIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                    clickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS,
+                            allWidgetIds);
+
+                    PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext.
+                            getApplicationContext(), 0, clickIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
+                    remoteViews.setOnClickPendingIntent(R.id.stock_name, pendingIntent);
+                    appWidgetManager.updateAppWidget(widgetId, remoteViews);
+
+                    this.stopSelf();
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
+
+    }
 }

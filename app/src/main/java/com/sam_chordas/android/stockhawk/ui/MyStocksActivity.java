@@ -8,19 +8,26 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.app.ActionBar;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
+
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.gms.gcm.GcmNetworkManager;
+import com.google.android.gms.gcm.PeriodicTask;
+import com.google.android.gms.gcm.Task;
+import com.melnykov.fab.FloatingActionButton;
 import com.sam_chordas.android.stockhawk.R;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
@@ -29,10 +36,6 @@ import com.sam_chordas.android.stockhawk.rest.RecyclerViewItemClickListener;
 import com.sam_chordas.android.stockhawk.rest.Utils;
 import com.sam_chordas.android.stockhawk.service.StockIntentService;
 import com.sam_chordas.android.stockhawk.service.StockTaskService;
-import com.google.android.gms.gcm.GcmNetworkManager;
-import com.google.android.gms.gcm.PeriodicTask;
-import com.google.android.gms.gcm.Task;
-import com.melnykov.fab.FloatingActionButton;
 import com.sam_chordas.android.stockhawk.touch_helper.SimpleItemTouchHelperCallback;
 
 public class MyStocksActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>{
@@ -52,6 +55,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   private Context mContext;
   private Cursor mCursor;
   boolean isConnected;
+    private TextView errorView;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -64,18 +68,14 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     isConnected = activeNetwork != null &&
         activeNetwork.isConnectedOrConnecting();
     setContentView(R.layout.activity_my_stocks);
+
+      errorView = (TextView) findViewById(R.id.error_view);
+
+      errorView.setVisibility(View.GONE);
     // The intent service is for executing immediate pulls from the Yahoo API
     // GCMTaskService can only schedule tasks, they cannot execute immediately
     mServiceIntent = new Intent(this, StockIntentService.class);
-    if (savedInstanceState == null){
-      // Run the initialize task service so that some stocks appear upon an empty database
-      mServiceIntent.putExtra("tag", "init");
-      if (isConnected){
-        startService(mServiceIntent);
-      } else{
-        networkToast();
-      }
-    }
+
     RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
     recyclerView.setLayoutManager(new LinearLayoutManager(this));
     getLoaderManager().initLoader(CURSOR_LOADER_ID, null, this);
@@ -84,12 +84,56 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     recyclerView.addOnItemTouchListener(new RecyclerViewItemClickListener(this,
             new RecyclerViewItemClickListener.OnItemClickListener() {
               @Override public void onItemClick(View v, int position) {
-                //TODO:
-                // do something on item click
+
+                  Intent i= new Intent(MyStocksActivity.this, StockDetailActivity.class);
+                  i.putExtra("yearLow", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.YEAR_LOW)));
+                  i.putExtra("yearHigh", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.YEAR_HIGH)));
+                  i.putExtra("dayLow", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.DAYS_LOW)));
+                  i.putExtra("dayHigh", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.DAYS_HIGH)));
+                  i.putExtra("epsCurr", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.EPS_CURR_YEAR)));
+                  i.putExtra("epsNext", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.EPS_NXT_YEAR)));
+                  i.putExtra("expectedOneYr", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.ONE_YR_EXP_PRICE)));
+                  i.putExtra("curr", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.BIDPRICE)));
+                  i.putExtra("fdma", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.FIFTY_DAY_MOVING_AVERAGE)));
+                  i.putExtra("thdma", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.TWO_HUNDRED_DAY_MOVING_AVERAGE)));
+                  startActivity(i);
+
+//                  List<String> detailList = new ArrayList<String>();
+//                  detailList.add("Day's Low : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.DAYS_LOW)));
+//                  detailList.add("Day's High : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.DAYS_HIGH)));
+//                  detailList.add("Day's Range : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.DAY_RANGE)));
+//                  detailList.add("Year's Low : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.YEAR_LOW)));
+//                  detailList.add("Year's High : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.YEAR_HIGH)));
+//                  detailList.add("Year's Range : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.YEAR_RANGE)));
+//                  detailList.add("50 Day Average : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.FIFTY_DAY_MOVING_AVERAGE)));
+//                  detailList.add("200 Day Average : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.TWO_HUNDRED_DAY_MOVING_AVERAGE)));
+//                  detailList.add("Current Year EPS : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.EPS_CURR_YEAR)));
+//                  detailList.add("Next Year EPS : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.EPS_NXT_YEAR)));
+//
+//                  CharSequence[] cs = detailList.toArray(new CharSequence[detailList.size()]);
+//
+//                  AlertDialog.Builder builder = new AlertDialog.Builder(MyStocksActivity.this);
+//                  builder.setTitle("Stock Details : "+mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.SYMBOL)));
+//                  builder.setItems(cs, new DialogInterface.OnClickListener() {
+//                      public void onClick(DialogInterface dialog, int item) {
+//                          dialog.dismiss();
+//                      }
+//                  });
+//                  AlertDialog alert = builder.create();
+//                  alert.show();
+
               }
             }));
     recyclerView.setAdapter(mCursorAdapter);
 
+      if (savedInstanceState == null){
+          // Run the initialize task service so that some stocks appear upon an empty database
+          mServiceIntent.putExtra("tag", "init");
+          if (isConnected){
+              errorView.setVisibility(View.GONE);
+              startService(mServiceIntent);
+          }
+      }
 
     FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
     fab.attachToRecyclerView(recyclerView);
@@ -98,6 +142,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
         if (isConnected){
           new MaterialDialog.Builder(mContext).title(R.string.symbol_search)
               .content(R.string.content_test)
+
               .inputType(InputType.TYPE_CLASS_TEXT)
               .input(R.string.input_hint, R.string.input_prefill, new MaterialDialog.InputCallback() {
                 @Override public void onInput(MaterialDialog dialog, CharSequence input) {
@@ -118,14 +163,18 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
                     mServiceIntent.putExtra("tag", "add");
                     mServiceIntent.putExtra("symbol", input.toString());
                     startService(mServiceIntent);
+                      errorView.setVisibility(View.GONE);
                   }
                 }
               })
               .show();
-        } else {
-          networkToast();
+        }  else if(mCursorAdapter.getItemCount()>0){
+            showOutOfDateView();
         }
-
+        else
+        {
+            showNetworkView();
+        }
       }
     });
 
@@ -162,9 +211,16 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, this);
   }
 
-  public void networkToast(){
+  public void showNetworkView(){
+      errorView.setText("Please Connect to internet.");
+      errorView.setVisibility(View.VISIBLE);
     Toast.makeText(mContext, getString(R.string.network_toast), Toast.LENGTH_SHORT).show();
   }
+
+public void showOutOfDateView(){
+    errorView.setVisibility(View.GONE);
+    Toast.makeText(mContext, getString(R.string.out_of_date_toast), Toast.LENGTH_SHORT).show();
+}
 
   public void restoreActionBar() {
     ActionBar actionBar = getSupportActionBar();
@@ -206,7 +262,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     // This narrows the return to only the stocks that are most current.
     return new CursorLoader(this, QuoteProvider.Quotes.CONTENT_URI,
         new String[]{ QuoteColumns._ID, QuoteColumns.SYMBOL, QuoteColumns.BIDPRICE,
-            QuoteColumns.PERCENT_CHANGE, QuoteColumns.CHANGE, QuoteColumns.ISUP},
+            QuoteColumns.PERCENT_CHANGE, QuoteColumns.CHANGE, QuoteColumns.ISUP, QuoteColumns.DAYS_LOW, QuoteColumns.DAYS_HIGH, QuoteColumns.DAY_RANGE, QuoteColumns.EPS_CURR_YEAR, QuoteColumns.EPS_NXT_YEAR, QuoteColumns.FIFTY_DAY_MOVING_AVERAGE, QuoteColumns.TWO_HUNDRED_DAY_MOVING_AVERAGE, QuoteColumns.YEAR_HIGH, QuoteColumns.YEAR_LOW, QuoteColumns.YEAR_RANGE, QuoteColumns.ONE_YR_EXP_PRICE},
         QuoteColumns.ISCURRENT + " = ?",
         new String[]{"1"},
         null);
@@ -216,6 +272,18 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   public void onLoadFinished(Loader<Cursor> loader, Cursor data){
     mCursorAdapter.swapCursor(data);
     mCursor = data;
+      Log.e("-----", ""+mCursorAdapter.getItemCount());
+      if(isConnected)
+      {
+          errorView.setVisibility(View.GONE);
+      }
+      else if(mCursorAdapter.getItemCount()>0){
+          showOutOfDateView();
+      }
+      else
+      {
+          showNetworkView();
+      }
   }
 
   @Override

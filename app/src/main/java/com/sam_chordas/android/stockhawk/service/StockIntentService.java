@@ -1,6 +1,7 @@
 package com.sam_chordas.android.stockhawk.service;
 
 import android.app.IntentService;
+import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,12 +21,16 @@ public class StockIntentService extends IntentService {
   }
 
   @Override protected void onHandleIntent(Intent intent) {
+      Log.e("onhandle", "1");
     Log.d(StockIntentService.class.getSimpleName(), "Stock Intent Service");
     StockTaskService stockTaskService = new StockTaskService(this);
     Bundle args = new Bundle();
-    if (intent.getStringExtra("tag").equals("add")){
+    if (intent!=null && intent.getStringExtra("tag")!=null && intent.getStringExtra("tag").equals("add")){
       args.putString("symbol", intent.getStringExtra("symbol"));
+
     }
+      args.putIntArray(AppWidgetManager.EXTRA_APPWIDGET_IDS, intent
+              .getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
     // We can call OnRunTask from the intent service to force it to run immediately instead of
     // scheduling a task.
     stockTaskService.onRunTask(new TaskParams(intent.getStringExtra("tag"), args));
