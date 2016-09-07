@@ -4,6 +4,7 @@ import android.content.ContentProviderOperation;
 import android.database.sqlite.SQLiteConstraintException;
 import android.util.Log;
 
+import com.sam_chordas.android.stockhawk.Object.Stock;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
 
@@ -21,8 +22,7 @@ public class Utils {
   private static String LOG_TAG = Utils.class.getSimpleName();
 
   public static boolean showPercent = true;
-    public static String stockName = "";
-    public static String stockPrice = "";
+    public static ArrayList<Stock> stockList = new ArrayList<>();
 
 
     public static void largeLog(String tag, String content) {
@@ -100,10 +100,13 @@ public class Utils {
         QuoteProvider.Quotes.CONTENT_URI);
     try {
         //For showing first item in widget
-        if(stockName.equalsIgnoreCase("")) {
-            stockName = jsonObject.getString("symbol");
-            stockPrice = truncateBidPrice(jsonObject.getString("Bid"));
-        }
+        Stock stockObj = new Stock();
+        stockObj.stockName = jsonObject.getString("symbol");
+        stockObj.stockPrice = truncateBidPrice(jsonObject.getString("Bid"));
+        if(!stockList.contains(stockObj))
+            stockList.add(stockObj);
+
+
       String change = jsonObject.getString("Change");
 
         builder.withValue(QuoteColumns.DAYS_LOW, jsonObject.getString("DaysLow"));

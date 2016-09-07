@@ -23,4 +23,9 @@
     <string name="fdma" translatable="false">50 Day MA</string>
     <string name="oneYrExpec" translatable="false">Expected 1 Year</string>
     <string name="thdma" translatable="false">200 Day MA</string>
+
+    <string name="toast_error_1" >This stock is already saved!</string>
+    <string name="toast_error_2" >Please Connect to internet.</string>
+    <string name="no_activities">Nodata</string>
+    <string name="loading">Your Stocks will Appear in a moment</string>
 </resources>

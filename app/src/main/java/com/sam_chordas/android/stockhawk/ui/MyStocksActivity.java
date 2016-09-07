@@ -98,30 +98,6 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
                   i.putExtra("thdma", mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.TWO_HUNDRED_DAY_MOVING_AVERAGE)));
                   startActivity(i);
 
-//                  List<String> detailList = new ArrayList<String>();
-//                  detailList.add("Day's Low : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.DAYS_LOW)));
-//                  detailList.add("Day's High : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.DAYS_HIGH)));
-//                  detailList.add("Day's Range : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.DAY_RANGE)));
-//                  detailList.add("Year's Low : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.YEAR_LOW)));
-//                  detailList.add("Year's High : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.YEAR_HIGH)));
-//                  detailList.add("Year's Range : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.YEAR_RANGE)));
-//                  detailList.add("50 Day Average : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.FIFTY_DAY_MOVING_AVERAGE)));
-//                  detailList.add("200 Day Average : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.TWO_HUNDRED_DAY_MOVING_AVERAGE)));
-//                  detailList.add("Current Year EPS : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.EPS_CURR_YEAR)));
-//                  detailList.add("Next Year EPS : "+ mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.EPS_NXT_YEAR)));
-//
-//                  CharSequence[] cs = detailList.toArray(new CharSequence[detailList.size()]);
-//
-//                  AlertDialog.Builder builder = new AlertDialog.Builder(MyStocksActivity.this);
-//                  builder.setTitle("Stock Details : "+mCursorAdapter.getCurrentItem(position).getString(mCursorAdapter.getCurrentItem(position).getColumnIndex(QuoteColumns.SYMBOL)));
-//                  builder.setItems(cs, new DialogInterface.OnClickListener() {
-//                      public void onClick(DialogInterface dialog, int item) {
-//                          dialog.dismiss();
-//                      }
-//                  });
-//                  AlertDialog alert = builder.create();
-//                  alert.show();
-
               }
             }));
     recyclerView.setAdapter(mCursorAdapter);
@@ -153,7 +129,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
                       new String[] { input.toString() }, null);
                   if (c.getCount() != 0) {
                     Toast toast =
-                        Toast.makeText(MyStocksActivity.this, "This stock is already saved!",
+                        Toast.makeText(MyStocksActivity.this, getResources().getString(R.string.toast_error_1),
                             Toast.LENGTH_LONG);
                     toast.setGravity(Gravity.CENTER, Gravity.CENTER, 0);
                     toast.show();
@@ -212,7 +188,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   }
 
   public void showNetworkView(){
-      errorView.setText("Please Connect to internet.");
+      errorView.setText(getResources().getString(R.string.toast_error_2));
       errorView.setVisibility(View.VISIBLE);
     Toast.makeText(mContext, getString(R.string.network_toast), Toast.LENGTH_SHORT).show();
   }

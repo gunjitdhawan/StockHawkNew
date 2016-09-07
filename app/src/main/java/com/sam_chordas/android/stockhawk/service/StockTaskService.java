@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
+import android.net.Uri;
 import android.os.RemoteException;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -15,11 +16,13 @@ import android.widget.RemoteViews;
 import com.google.android.gms.gcm.GcmNetworkManager;
 import com.google.android.gms.gcm.GcmTaskService;
 import com.google.android.gms.gcm.TaskParams;
+import com.sam_chordas.android.stockhawk.Object.Stock;
 import com.sam_chordas.android.stockhawk.R;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
 import com.sam_chordas.android.stockhawk.rest.Utils;
-import com.sam_chordas.android.stockhawk.widget.StockWidgetProvider;
+import com.sam_chordas.android.stockhawk.ui.MyStocksActivity;
+import com.sam_chordas.android.stockhawk.widget.WidgetService;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -27,6 +30,7 @@ import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 /**
  * Created by sam_chordas on 9/30/15.
@@ -150,44 +154,55 @@ public class StockTaskService extends GcmTaskService{
         e.printStackTrace();
       }
     }
-    populateWidget(Utils.stockName, Utils.stockPrice);
+    populateWidget(Utils.stockList);
     return result;
   }
 
-    private void populateWidget(String stockName, String stockPrice) {
+    private void populateWidget(ArrayList<Stock> stockList) {
+        ArrayList<String> stockListString = convertList(stockList);
 
         Log.e("populate", "called");
             try {
                 AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(mContext
                         .getApplicationContext());
-                for (int widgetId : allWidgetIds) {
+                for (int appWidgetIds : allWidgetIds) {
+
                     RemoteViews remoteViews = new RemoteViews(mContext.getApplicationContext().getPackageName(),
                             R.layout.widget_layout);
-                    remoteViews.setTextViewText(R.id.stock_name,
-                            String.valueOf(stockName));
 
-                    remoteViews.setTextViewText(R.id.stock_price,
-                            String.valueOf(stockPrice));
+                    Intent serviceIntent = new Intent(mContext, WidgetService.class);
+                    serviceIntent.putExtra("collection", stockListString);
+                    serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetIds);
+                    serviceIntent.setData(Uri.parse(serviceIntent.toUri(Intent.URI_INTENT_SCHEME))); // embed extras so they don't get ignored
+                    remoteViews.setRemoteAdapter(R.id.widgetCollectionList, serviceIntent);
+                    remoteViews.setEmptyView(R.id.stackWidgetView, R.id.stackWidgetEmptyView);
+
+                    // set intent for item click (opens main activity)
+                    Intent viewIntent = new Intent(mContext, MyStocksActivity.class);
+                    //viewIntent.setAction(MyStocksActivity.ACTION_VIEW);
+                    viewIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetIds);
+                    viewIntent.setData(Uri.parse(viewIntent.toUri(Intent.URI_INTENT_SCHEME)));
+
+                    PendingIntent viewPendingIntent = PendingIntent.getActivity(mContext, 0, viewIntent, 0);
+                    remoteViews.setPendingIntentTemplate(R.id.stackWidgetView, viewPendingIntent);
 
 
-                    Intent clickIntent = new Intent(mContext.getApplicationContext(),
-                            StockWidgetProvider.class);
 
-                    clickIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-                    clickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS,
-                            allWidgetIds);
-
-                    PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext.
-                            getApplicationContext(), 0, clickIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
-                    remoteViews.setOnClickPendingIntent(R.id.stock_name, pendingIntent);
-                    appWidgetManager.updateAppWidget(widgetId, remoteViews);
-
-                    this.stopSelf();
+                    // update widget
+                    appWidgetManager.updateAppWidget(appWidgetIds, remoteViews);
                 }
             } catch (NullPointerException e) {
                 e.printStackTrace();
             }
 
+    }
+
+    private ArrayList<String> convertList(ArrayList<Stock> stockList) {
+        ArrayList<String> stringArrayList = new ArrayList<>();
+        for(Stock stock : stockList)
+        {
+            stringArrayList.add(stock.stockName+" - $"+stock.stockPrice);
+        }
+        return stringArrayList;
     }
 }
