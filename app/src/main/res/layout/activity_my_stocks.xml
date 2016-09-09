@@ -37,6 +37,6 @@
         android:visibility="gone"
         android:textSize="28dp"
         android:id="@+id/error_view"
-        android:text="Please connect to internet!"/>
+        android:text="@string/toast_error_2"/>
 
 </FrameLayout>
